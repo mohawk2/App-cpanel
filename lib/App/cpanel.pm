@@ -45,9 +45,9 @@ Stores relevant domain name in F<~/.cpanel-domain>.
 
 =head1 SEE ALSO
 
-https://documentation.cpanel.net/display/DD/Guide+to+UAPI
+L<https://documentation.cpanel.net/display/DD/Guide+to+UAPI>
 
-https://documentation.cpanel.net/display/DD/Guide+to+cPanel+API+2
+L<https://documentation.cpanel.net/display/DD/Guide+to+cPanel+API+2>
 
 =head1 AUTHOR
 

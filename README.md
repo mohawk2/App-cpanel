@@ -34,9 +34,9 @@ Stores relevant domain name in `~/.cpanel-domain`.
 
 # SEE ALSO
 
-https://documentation.cpanel.net/display/DD/Guide+to+UAPI
+[https://documentation.cpanel.net/display/DD/Guide+to+UAPI](https://documentation.cpanel.net/display/DD/Guide+to+UAPI)
 
-https://documentation.cpanel.net/display/DD/Guide+to+cPanel+API+2
+[https://documentation.cpanel.net/display/DD/Guide+to+cPanel+API+2](https://documentation.cpanel.net/display/DD/Guide+to+cPanel+API+2)
 
 # AUTHOR
 
