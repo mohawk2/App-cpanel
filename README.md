@@ -32,6 +32,19 @@ cookie, which you can get from your browser's DevTools.
 
 Stores relevant domain name in `~/.cpanel-domain`.
 
+# FUNCTIONS
+
+Exportable:
+
+## dispatch\_cmd\_print
+
+Will print the return value, using ["dumper" in Mojo::Util](https://metacpan.org/pod/Mojo::Util#dumper) except for
+`download`.
+
+## dispatch\_cmd\_raw
+
+Just returns the decoded JSON value or `download`ed content.
+
 # SEE ALSO
 
 [https://documentation.cpanel.net/display/DD/Guide+to+UAPI](https://documentation.cpanel.net/display/DD/Guide+to+UAPI)

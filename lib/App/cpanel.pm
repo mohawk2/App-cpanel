@@ -3,7 +3,7 @@ package App::cpanel;
 use Exporter 'import';
 
 our $VERSION = '0.002';
-our @EXPORT_OK = qw(dispatch_cmd);
+our @EXPORT_OK = qw(dispatch_cmd_print dispatch_cmd_raw);
 
 =head1 NAME
 
@@ -43,6 +43,19 @@ cookie, which you can get from your browser's DevTools.
 
 Stores relevant domain name in F<~/.cpanel-domain>.
 
+=head1 FUNCTIONS
+
+Exportable:
+
+=head2 dispatch_cmd_print
+
+Will print the return value, using L<Mojo::Util/dumper> except for
+C<download>.
+
+=head2 dispatch_cmd_raw
+
+Just returns the decoded JSON value or C<download>ed content.
+
 =head1 SEE ALSO
 
 L<https://documentation.cpanel.net/display/DD/Guide+to+UAPI>
@@ -68,19 +81,27 @@ use Mojo::File qw(path);
 use Mojo::Util qw(dumper);
 
 my %cmd2func = (
-  get => \&get,
-  download => \&download,
-  upload => \&upload,
-  api2 => \&api2,
+  get => [ \&get, 1 ],
+  download => [ \&download, 0 ],
+  upload => [ \&upload, 1 ],
+  api2 => [ \&api2, 1 ],
 );
 my $token_file = "$ENV{HOME}/.cpanel-token";
 my $domain_file = "$ENV{HOME}/.cpanel-domain";
 
-sub dispatch_cmd {
+sub dispatch_cmd_print {
   my $cmd = shift;
   die "No command\n" unless $cmd;
-  die "Unknown command '$cmd'\n" unless $cmd2func{$cmd};
-  goto &{$cmd2func{$cmd}};
+  die "Unknown command '$cmd'\n" unless my $info = $cmd2func{$cmd};
+  my $retval = $info->[0]->(@_);
+  print $info->[1] ? dumper($retval) : $retval;
+}
+
+sub dispatch_cmd_raw {
+  my $cmd = shift;
+  die "No command\n" unless $cmd;
+  die "Unknown command '$cmd'\n" unless my $info = $cmd2func{$cmd};
+  goto &{$info->[0]};
 }
 
 sub api_request {
@@ -121,7 +142,7 @@ sub get {
   my $tx = api_request 'get', $domain, $token,
     [ 'execute', $module, $function ],
     $args_hash;
-  dumper $tx->res->json;
+  $tx->res->json;
 }
 
 sub download {
@@ -159,7 +180,7 @@ sub upload {
     undef,
     form => make_upload_form($dir, @files),
     ;
-  dumper $tx->res->json;
+  $tx->res->json;
 }
 
 sub api2 {
@@ -176,7 +197,7 @@ sub api2 {
       cpanel_jsonapi_apiversion => 2,
       %{ $args_hash || {} },
     };
-  dumper $tx->res->json;
+  $tx->res->json;
 }
 
 1;
