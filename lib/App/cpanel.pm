@@ -1,11 +1,13 @@
-#!perl
-
 package App::cpanel;
+
+use Exporter 'import';
+
 our $VERSION = '0.001';
+our @EXPORT_OK = qw(dispatch_cmd);
 
 =head1 NAME
 
-cpanel - CLI for cPanel UAPI and API 2
+App::cpanel - CLI for cPanel UAPI and API 2
 
 =begin markdown
 
@@ -74,12 +76,11 @@ my %cmd2func = (
 my $token_file = "$ENV{HOME}/.cpanel-token";
 my $domain_file = "$ENV{HOME}/.cpanel-domain";
 
-unless (caller) {
-  # CLI
+sub dispatch_cmd {
   my $cmd = shift;
   die "No command\n" unless $cmd;
   die "Unknown command '$cmd'\n" unless $cmd2func{$cmd};
-  print $cmd2func{$cmd}->(@ARGV);
+  goto &{$cmd2func{$cmd}};
 }
 
 sub api_request {

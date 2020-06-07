@@ -6,7 +6,7 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
   NAME             => 'App::cpanel',
   AUTHOR           => q{Ed J <etj@cpan.org>},
-  VERSION_FROM     => 'script/cpanel',
+  VERSION_FROM     => 'lib/App/cpanel.pm',
   LICENSE          => 'artistic_2',
   MIN_PERL_VERSION => "5.016",
   "CONFIGURE_REQUIRES" => {

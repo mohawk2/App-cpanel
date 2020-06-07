@@ -1,6 +1,6 @@
 # NAME
 
-cpanel - CLI for cPanel UAPI and API 2
+App::cpanel - CLI for cPanel UAPI and API 2
 
 # PROJECT STATUS
 
