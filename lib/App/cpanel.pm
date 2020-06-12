@@ -3,7 +3,7 @@ package App::cpanel;
 use Exporter 'import';
 
 our $VERSION = '0.002';
-our @EXPORT_OK = qw(dispatch_cmd_print dispatch_cmd_raw);
+our @EXPORT_OK = qw(dispatch_cmd_print dispatch_cmd_raw_p);
 
 =head1 NAME
 
@@ -52,9 +52,9 @@ Exportable:
 Will print the return value, using L<Mojo::Util/dumper> except for
 C<download>.
 
-=head2 dispatch_cmd_raw
+=head2 dispatch_cmd_raw_p
 
-Just returns the decoded JSON value or C<download>ed content.
+Returns a promise of the decoded JSON value or C<download>ed content.
 
 =head1 SEE ALSO
 
@@ -81,10 +81,10 @@ use Mojo::File qw(path);
 use Mojo::Util qw(dumper);
 
 my %cmd2func = (
-  uapi => [ \&uapi, 1 ],
-  download => [ \&download, 0 ],
-  upload => [ \&upload, 1 ],
-  api2 => [ \&api2, 1 ],
+  uapi => [ \&uapi_p, 1 ],
+  download => [ \&download_p, 0 ],
+  upload => [ \&upload_p, 1 ],
+  api2 => [ \&api2_p, 1 ],
 );
 my $token_file = "$ENV{HOME}/.cpanel-token";
 my $domain_file = "$ENV{HOME}/.cpanel-domain";
@@ -93,11 +93,12 @@ sub dispatch_cmd_print {
   my $cmd = shift;
   die "No command\n" unless $cmd;
   die "Unknown command '$cmd'\n" unless my $info = $cmd2func{$cmd};
-  my $retval = $info->[0]->(@_);
-  print $info->[1] ? dumper($retval) : $retval;
+  my $p = dispatch_cmd_raw_p($cmd, @_);
+  $p = $p->then(\&dumper) if $info->[1];
+  $p->then(sub { print @_ }, sub { warn @_ })->wait;
 }
 
-sub dispatch_cmd_raw {
+sub dispatch_cmd_raw_p {
   my $cmd = shift;
   die "No command\n" unless $cmd;
   die "Unknown command '$cmd'\n" unless my $info = $cmd2func{$cmd};
@@ -110,7 +111,7 @@ sub api_request {
   my $url = Mojo::URL->new("https://$domain:2083");
   $url->path(join '/', '', "cpsess$url_token", @$parts);
   $url->query(%$args) if $args;
-  my $ua = Mojo::UserAgent->new;
+  CORE::state $ua = Mojo::UserAgent->new; # state as needs to live long enough to complete request
   $ua->$method(
     $url->to_abs . "",
     { Cookie => "cpsession=$cookie_token" },
@@ -133,26 +134,26 @@ sub read_file {
 sub read_token { read_file($token_file) }
 sub read_domain { read_file($domain_file) }
 
-sub uapi {
+sub uapi_p {
   my ($module, $function, @args) = @_;
   die "No module\n" unless $module;
   die "No function\n" unless $function;
   my ($token, $domain) = (read_token(), read_domain());
   my $args_hash = { map split('=', $_, 2), @args } if @args;
-  my $tx = api_request 'get', $domain, $token,
+  my $tx_p = api_request 'get_p', $domain, $token,
     [ 'execute', $module, $function ],
     $args_hash;
-  $tx->res->json;
+  $tx_p->then(sub { $_[0]->res->json });
 }
 
-sub download {
+sub download_p {
   my ($file) = @_;
   die "No file\n" unless $file;
   my ($token, $domain) = (read_token(), read_domain());
-  my $tx = api_request 'get', $domain, $token,
+  my $tx_p = api_request 'get_p', $domain, $token,
     [ 'download' ],
     { skipencode => 1, file => $file };
-  $tx->res->body;
+  $tx_p->then(sub { $_[0]->res->body });
 }
 
 sub make_upload_form {
@@ -170,26 +171,26 @@ sub make_upload_form {
   };
 }
 
-sub upload {
+sub upload_p {
   my ($dir, @files) = @_;
   die "No dir\n" unless $dir;
   die "No files\n" unless @files;
   my ($token, $domain) = (read_token(), read_domain());
-  my $tx = api_request 'post', $domain, $token,
+  my $tx_p = api_request 'post_p', $domain, $token,
     [ 'execute', 'Fileman', 'upload_files' ],
     undef,
     form => make_upload_form($dir, @files),
     ;
-  $tx->res->json;
+  $tx_p->then(sub { $_[0]->res->json });
 }
 
-sub api2 {
+sub api2_p {
   my ($module, $function, @args) = @_;
   die "No module\n" unless $module;
   die "No function\n" unless $function;
   my ($token, $domain) = (read_token(), read_domain());
   my $args_hash = { map split('=', $_, 2), @args } if @args;
-  my $tx = api_request 'post', $domain, $token,
+  my $tx_p = api_request 'post_p', $domain, $token,
     [ qw(json-api cpanel) ],
     {
       cpanel_jsonapi_module => $module,
@@ -197,7 +198,7 @@ sub api2 {
       cpanel_jsonapi_apiversion => 2,
       %{ $args_hash || {} },
     };
-  $tx->res->json;
+  $tx_p->then(sub { $_[0]->res->json });
 }
 
 1;

@@ -41,9 +41,9 @@ Exportable:
 Will print the return value, using ["dumper" in Mojo::Util](https://metacpan.org/pod/Mojo::Util#dumper) except for
 `download`.
 
-## dispatch\_cmd\_raw
+## dispatch\_cmd\_raw\_p
 
-Just returns the decoded JSON value or `download`ed content.
+Returns a promise of the decoded JSON value or `download`ed content.
 
 # SEE ALSO
 
