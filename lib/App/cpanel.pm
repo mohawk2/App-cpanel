@@ -106,7 +106,7 @@ sub dispatch_cmd_raw {
 
 sub api_request {
   my ($method, $domain, $token, $parts, $args, @extra_args) = @_;
-  my ($url_token, $cookie_token) = split /\n/, $token;
+  my ($url_token, $cookie_token) = split /\s+/, $token;
   my $url = Mojo::URL->new("https://$domain:2083");
   $url->path(join '/', '', "cpsess$url_token", @$parts);
   $url->query(%$args) if $args;
