@@ -19,10 +19,10 @@ App::cpanel - CLI for cPanel UAPI and API 2
 
 =head1 SYNOPSIS
 
-  $ cpanel get Notifications get_notifications_count
-  $ cpanel get ResourceUsage get_usages
-  $ cpanel get Fileman list_files dir=public_html
-  $ cpanel get Fileman get_file_content dir=public_html file=index.html
+  $ cpanel uapi Notifications get_notifications_count
+  $ cpanel uapi ResourceUsage get_usages
+  $ cpanel uapi Fileman list_files dir=public_html
+  $ cpanel uapi Fileman get_file_content dir=public_html file=index.html
   $ cpanel download public_html/index.html
   $ cpanel api2 Fileman fileop op=chmod metadata=0755 sourcefiles=public_html/cgi-bin/hello-world
   $ cpanel api2 Fileman fileop op=unlink sourcefiles=public_html/cgi-bin/hello-world
@@ -81,7 +81,7 @@ use Mojo::File qw(path);
 use Mojo::Util qw(dumper);
 
 my %cmd2func = (
-  get => [ \&get, 1 ],
+  uapi => [ \&uapi, 1 ],
   download => [ \&download, 0 ],
   upload => [ \&upload, 1 ],
   api2 => [ \&api2, 1 ],
@@ -133,7 +133,7 @@ sub read_file {
 sub read_token { read_file($token_file) }
 sub read_domain { read_file($domain_file) }
 
-sub get {
+sub uapi {
   my ($module, $function, @args) = @_;
   die "No module\n" unless $module;
   die "No function\n" unless $function;

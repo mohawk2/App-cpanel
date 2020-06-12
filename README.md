@@ -8,10 +8,10 @@ App::cpanel - CLI for cPanel UAPI and API 2
 
 # SYNOPSIS
 
-    $ cpanel get Notifications get_notifications_count
-    $ cpanel get ResourceUsage get_usages
-    $ cpanel get Fileman list_files dir=public_html
-    $ cpanel get Fileman get_file_content dir=public_html file=index.html
+    $ cpanel uapi Notifications get_notifications_count
+    $ cpanel uapi ResourceUsage get_usages
+    $ cpanel uapi Fileman list_files dir=public_html
+    $ cpanel uapi Fileman get_file_content dir=public_html file=index.html
     $ cpanel download public_html/index.html
     $ cpanel api2 Fileman fileop op=chmod metadata=0755 sourcefiles=public_html/cgi-bin/hello-world
     $ cpanel api2 Fileman fileop op=unlink sourcefiles=public_html/cgi-bin/hello-world
