@@ -303,11 +303,11 @@ sub dir_walk_p {
     $to_dir_create_p = Mojo::Promise->resolve(1);
   } else {
     my $from_dir_perms;
-    $to_dir_create_p = $from_map->{ls}->(path($from_dir)->dirname)->then(sub {
+    $to_dir_create_p = $to_map->{mkdir}->($to_dir)->then(sub {
+      $from_map->{ls}->(path($from_dir)->dirname)
+    })->then(sub {
       my ($dirs, $files) = @_;
       $from_dir_perms = $dirs->{path($from_dir)->basename}[0] || '0755';
-    })->then(sub {
-      $to_map->{mkdir}->($to_dir)
     })->then(sub {
       $to_map->{chmod}->($to_dir, $from_dir_perms)
     });
