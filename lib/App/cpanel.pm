@@ -116,7 +116,7 @@ use warnings;
 use Mojo::URL;
 use Mojo::UserAgent;
 use Mojo::File qw(path);
-use Mojo::Util qw(dumper);
+use Mojo::Util qw(dumper encode);
 
 my %cmd2func = (
   uapi => [ \&uapi_p, 1 ],
@@ -152,7 +152,7 @@ sub dispatch_cmd_print {
   die "Unknown command '$cmd'\n" unless my $info = $cmd2func{$cmd};
   my $p = dispatch_cmd_raw_p($cmd, @_);
   $p = $p->then(\&dumper) if $info->[1];
-  $p->then(sub { print @_ }, sub { warn @_ })->wait;
+  $p->then(sub { print @_ }, sub { warn encode 'UTF-8', join '', @_ })->wait;
 }
 
 sub dispatch_cmd_raw_p {
