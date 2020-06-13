@@ -35,6 +35,8 @@ App::cpanel - CLI for cPanel UAPI and API 2
 
   # download
   $ cpanel mirror public_html public_html cpanel localfs
+  # upload
+  $ cpanel mirror public_html public_html localfs cpanel
 
 =head1 DESCRIPTION
 
