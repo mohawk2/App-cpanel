@@ -56,14 +56,14 @@ maps. Assumes UNIX-like semantics in filenames, i.e. `$dir/$file`.
 
 Returns a promise of completion.
 
-The maps are hash-refs whose values are functions.
+The maps are hash-refs whose values are functions, and the keys are:
 
 ### ls
 
 Takes `$dir`. Returns a promise of two hash-refs, of directories and of
 files. Each has keys of relative filename, values are an array-ref
 containing a string octal number representing UNIX permissions, and a
-number giving the `mtime`.
+number giving the `mtime`. Must reject if does not exist.
 
 ### mkdir
 

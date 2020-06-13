@@ -23,7 +23,11 @@ my %file2contents = (
   'public_html/cgi-bin/hello' => 'hello',
 );
 my %test_map = (
-  ls => sub { Mojo::Promise->resolve(@{$dir2contents{$_[0]}}); },
+  ls => sub {
+    $dir2contents{$_[0]}
+      ? Mojo::Promise->resolve(@{$dir2contents{$_[0]}})
+      : Mojo::Promise->reject("$_[0] does not exist");
+  },
   mkdir => sub { push @mkdirs, $_[0]; Mojo::Promise->resolve(1); },
   read => sub { Mojo::Promise->resolve($file2contents{"$_[0]/$_[1]"});  },
   write => sub { push @writes, [ @_ ]; Mojo::Promise->resolve(1); },

@@ -67,14 +67,14 @@ maps. Assumes UNIX-like semantics in filenames, i.e. C<$dir/$file>.
 
 Returns a promise of completion.
 
-The maps are hash-refs whose values are functions.
+The maps are hash-refs whose values are functions, and the keys are:
 
 =head3 ls
 
 Takes C<$dir>. Returns a promise of two hash-refs, of directories and of
 files. Each has keys of relative filename, values are an array-ref
 containing a string octal number representing UNIX permissions, and a
-number giving the C<mtime>.
+number giving the C<mtime>. Must reject if does not exist.
 
 =head3 mkdir
 
@@ -303,7 +303,10 @@ sub dir_walk_p {
     $to_dir_create_p = Mojo::Promise->resolve(1);
   } else {
     my $from_dir_perms;
-    $to_dir_create_p = $to_map->{mkdir}->($to_dir)->then(sub {
+    $to_dir_create_p = $to_map->{ls}->($to_dir)->catch(sub {
+      # only create if ls fails
+      $to_map->{mkdir}->($to_dir)
+    })->then(sub {
       $from_map->{ls}->(path($from_dir)->dirname)
     })->then(sub {
       my ($dirs, $files) = @_;
