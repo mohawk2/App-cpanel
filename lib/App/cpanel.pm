@@ -134,8 +134,16 @@ my %localfs_map = (
   write => \&localfs_write,
   chmod => \&localfs_chmod,
 );
+my %cpanel_map = (
+  ls => \&cpanel_ls,
+  mkdir => \&cpanel_mkdir,
+  read => \&cpanel_read,
+  write => \&cpanel_write,
+  chmod => \&cpanel_chmod,
+);
 our %MAP2HASH = (
   localfs => \%localfs_map,
+  cpanel => \%cpanel_map,
 );
 
 sub dispatch_cmd_print {
@@ -340,6 +348,42 @@ sub localfs_chmod {
   $path = path($path);
   $path->chmod(oct $perms);
   Mojo::Promise->resolve(1);
+}
+
+sub cpanel_ls {
+  my ($dir) = @_;
+  uapi_p(qw(Fileman list_files), { dir => $dir })->then(sub {
+    my (%dirs, %files);
+    ($_->{type} eq 'dir' ? \%dirs : \%files)->{$_->{file}} =
+      [ $_->{nicemode}, $_->{mtime} ]
+      for @{ $_[0]->{data} };
+    (\%dirs, \%files);
+  });
+}
+
+sub cpanel_read {
+  my ($dir, $file) = @_;
+  download_p "$dir/$file";
+}
+
+sub cpanel_mkdir {
+  my ($dir) = @_;
+  $dir = path $dir;
+  uapi_p qw(Fileman mkdir), { path => $dir->dirname, name => $dir->basename };
+}
+
+sub cpanel_write {
+  my ($dir, $file, $content) = @_;
+  uapi_p qw(Fileman savefile), {
+    dir => $dir, filename => $file, content => $content,
+  };
+}
+
+sub cpanel_chmod {
+  my ($path, $perms) = @_;
+  uapi_p qw(Fileman fileop), {
+    op => 'chmod', metadata => $perms, sourcefiles => $path,
+  };
 }
 
 1;
