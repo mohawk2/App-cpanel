@@ -188,7 +188,10 @@ sub uapi_p {
   die "No module\n" unless $module;
   die "No function\n" unless $function;
   my ($token, $domain) = (read_token(), read_domain());
-  my $args_hash = { map split('=', $_, 2), @args } if @args;
+  my $args_hash = ref($args[0]) eq 'HASH'
+    ? $args[0]
+    : { map split('=', $_, 2), @args }
+    if @args;
   my $tx_p = api_request 'get_p', $domain, $token,
     [ 'execute', $module, $function ],
     $args_hash;
@@ -238,7 +241,10 @@ sub api2_p {
   die "No module\n" unless $module;
   die "No function\n" unless $function;
   my ($token, $domain) = (read_token(), read_domain());
-  my $args_hash = { map split('=', $_, 2), @args } if @args;
+  my $args_hash = ref($args[0]) eq 'HASH'
+    ? $args[0]
+    : { map split('=', $_, 2), @args }
+    if @args;
   my $tx_p = api_request 'post_p', $domain, $token,
     [ qw(json-api cpanel) ],
     {
