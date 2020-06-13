@@ -1,5 +1,7 @@
+0.004 2020-06-13
 - reject on non-200 response code
 - reject on failure
+- fixes for mirror so upload works
 
 0.003 2020-06-13
 - enable mirroring to and from a cPanel site
