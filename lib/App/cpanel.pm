@@ -191,6 +191,12 @@ sub read_file {
 sub read_token { read_file($token_file) }
 sub read_domain { read_file($domain_file) }
 
+sub _error_or_json {
+  my $res = $_[0]->res;
+  die $res->code . ": " . $res->message . "\n" if $res->code != 200;
+  $res->json;
+}
+
 sub uapi_p {
   my ($module, $function, @args) = @_;
   die "No module\n" unless $module;
@@ -203,7 +209,7 @@ sub uapi_p {
   my $tx_p = api_request 'get_p', $domain, $token,
     [ 'execute', $module, $function ],
     $args_hash;
-  $tx_p->then(sub { $_[0]->res->json });
+  $tx_p->then(\&_error_or_json);
 }
 
 sub download_p {
@@ -213,7 +219,11 @@ sub download_p {
   my $tx_p = api_request 'get_p', $domain, $token,
     [ 'download' ],
     { skipencode => 1, file => $file };
-  $tx_p->then(sub { $_[0]->res->body });
+  $tx_p->then(sub {
+    my $res = $_[0]->res;
+    die $res->code . ": " . $res->message . "\n" if $res->code != 200;
+    $res->body;
+  });
 }
 
 sub make_upload_form {
@@ -241,7 +251,7 @@ sub upload_p {
     undef,
     form => make_upload_form($dir, @files),
     ;
-  $tx_p->then(sub { $_[0]->res->json });
+  $tx_p->then(\&_error_or_json);
 }
 
 sub api2_p {
@@ -261,7 +271,7 @@ sub api2_p {
       cpanel_jsonapi_apiversion => 2,
       %{ $args_hash || {} },
     };
-  $tx_p->then(sub { $_[0]->res->json });
+  $tx_p->then(\&_error_or_json);
 }
 
 sub dir_walk_p {
