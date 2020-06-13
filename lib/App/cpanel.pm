@@ -379,19 +379,19 @@ sub cpanel_read {
 sub cpanel_mkdir {
   my ($dir) = @_;
   $dir = path $dir;
-  uapi_p qw(Fileman mkdir), { path => $dir->dirname, name => $dir->basename };
+  api2_p qw(Fileman mkdir), { path => $dir->dirname, name => $dir->basename };
 }
 
 sub cpanel_write {
   my ($dir, $file, $content) = @_;
-  uapi_p qw(Fileman savefile), {
+  api2_p qw(Fileman savefile), {
     dir => $dir, filename => $file, content => $content,
   };
 }
 
 sub cpanel_chmod {
   my ($path, $perms) = @_;
-  uapi_p qw(Fileman fileop), {
+  api2_p qw(Fileman fileop), {
     op => 'chmod', metadata => $perms, sourcefiles => $path,
   };
 }
