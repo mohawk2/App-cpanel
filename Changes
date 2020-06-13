@@ -1,4 +1,5 @@
 - reject on non-200 response code
+- reject on failure
 
 0.003 2020-06-13
 - enable mirroring to and from a cPanel site

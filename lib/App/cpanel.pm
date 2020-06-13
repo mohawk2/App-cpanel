@@ -197,6 +197,15 @@ sub _error_or_json {
   $res->json;
 }
 
+sub _uapi_error_or_json {
+  my $json = $_[0];
+  if (!$json->{status}) {
+    die join '', "Failed:\n",
+      map "$_\n", map @{ $json->{$_} || [] }, qw(errors warnings);
+  }
+  $json;
+}
+
 sub uapi_p {
   my ($module, $function, @args) = @_;
   die "No module\n" unless $module;
@@ -209,7 +218,7 @@ sub uapi_p {
   my $tx_p = api_request 'get_p', $domain, $token,
     [ 'execute', $module, $function ],
     $args_hash;
-  $tx_p->then(\&_error_or_json);
+  $tx_p->then(\&_error_or_json)->then(\&_uapi_error_or_json);
 }
 
 sub download_p {
@@ -251,7 +260,20 @@ sub upload_p {
     undef,
     form => make_upload_form($dir, @files),
     ;
-  $tx_p->then(\&_error_or_json);
+  $tx_p->then(\&_error_or_json)->then(\&_uapi_error_or_json);
+}
+
+sub _api2_error_or_json {
+  my $json = $_[0];
+  my $result = $json->{cpanelresult};
+  if (!$result or !$result->{event}{result} or $result->{error}) {
+    die join '', "Failed:\n",
+      map "$_\n",
+      ($result->{error} ? $result->{error} : ()),
+      (map "$_->{src}: $_->{err}", grep !$_->{result}, @{$result->{data} || []}),
+      ;
+  }
+  $json;
 }
 
 sub api2_p {
@@ -271,7 +293,7 @@ sub api2_p {
       cpanel_jsonapi_apiversion => 2,
       %{ $args_hash || {} },
     };
-  $tx_p->then(\&_error_or_json);
+  $tx_p->then(\&_error_or_json)->then(\&_api2_error_or_json);
 }
 
 sub dir_walk_p {
