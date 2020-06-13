@@ -353,10 +353,10 @@ sub localfs_ls {
   my $dir_path = path($dir);
   my %files = map {
     ($_->basename => [ sprintf("%04o", $_->lstat->mode & 07777), $_->lstat->mtime ])
-  } $dir_path->list->each;
+  } $dir_path->list({hidden => 1})->each;
   my %dirs = map {
     ($_->basename => [ sprintf("%04o", $_->lstat->mode & 07777), $_->lstat->mtime ])
-  } $dir_path->list({dir => 1})->grep(sub { !$files{$_->basename} })->each;
+  } $dir_path->list({dir => 1, hidden => 1})->grep(sub { !$files{$_->basename} })->each;
   Mojo::Promise->resolve(\%dirs, \%files);
 }
 

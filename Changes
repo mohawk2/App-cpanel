@@ -1,3 +1,5 @@
+- localfs.ls must list dotfiles
+
 0.004 2020-06-13
 - reject on non-200 response code
 - reject on failure
