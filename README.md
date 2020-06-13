@@ -45,6 +45,41 @@ Will print the return value, using ["dumper" in Mojo::Util](https://metacpan.org
 
 Returns a promise of the decoded JSON value or `download`ed content.
 
+## dir\_walk\_p
+
+Takes `$from_dir`, `$to_dir`, `$from_map`, `$to_map`. Copies the
+information in the first directory to the second, using the respective
+maps. Assumes UNIX-like semantics in filenames, i.e. `$dir/$file`.
+
+Returns a promise of completion.
+
+The maps are hash-refs whose values are functions.
+
+### ls
+
+Takes `$dir`. Returns a promise of two hash-refs, of directories and of
+files. Each has keys of relative filename, values are an array-ref
+containing a string octal number representing UNIX permissions, and a
+number giving the `mtime`.
+
+### mkdir
+
+Takes `$dir`. Returns a promise of having created the directory.
+
+### read
+
+Takes `$dir`, `$file`. Returns a promise of the file contents.
+
+### write
+
+Takes `$dir`, `$file`. Returns a promise of having written the file
+contents.
+
+### chmod
+
+Takes `$path`, `$perms`. Returns a promise of having changed the
+permissions.
+
 # SEE ALSO
 
 [https://documentation.cpanel.net/display/DD/Guide+to+UAPI](https://documentation.cpanel.net/display/DD/Guide+to+UAPI)

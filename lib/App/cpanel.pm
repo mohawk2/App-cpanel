@@ -3,7 +3,7 @@ package App::cpanel;
 use Exporter 'import';
 
 our $VERSION = '0.002';
-our @EXPORT_OK = qw(dispatch_cmd_print dispatch_cmd_raw_p);
+our @EXPORT_OK = qw(dispatch_cmd_print dispatch_cmd_raw_p dir_walk_p);
 
 =head1 NAME
 
@@ -55,6 +55,41 @@ C<download>.
 =head2 dispatch_cmd_raw_p
 
 Returns a promise of the decoded JSON value or C<download>ed content.
+
+=head2 dir_walk_p
+
+Takes C<$from_dir>, C<$to_dir>, C<$from_map>, C<$to_map>. Copies the
+information in the first directory to the second, using the respective
+maps. Assumes UNIX-like semantics in filenames, i.e. C<$dir/$file>.
+
+Returns a promise of completion.
+
+The maps are hash-refs whose values are functions.
+
+=head3 ls
+
+Takes C<$dir>. Returns a promise of two hash-refs, of directories and of
+files. Each has keys of relative filename, values are an array-ref
+containing a string octal number representing UNIX permissions, and a
+number giving the C<mtime>.
+
+=head3 mkdir
+
+Takes C<$dir>. Returns a promise of having created the directory.
+
+=head3 read
+
+Takes C<$dir>, C<$file>. Returns a promise of the file contents.
+
+=head3 write
+
+Takes C<$dir>, C<$file>. Returns a promise of having written the file
+contents.
+
+=head3 chmod
+
+Takes C<$path>, C<$perms>. Returns a promise of having changed the
+permissions.
 
 =head1 SEE ALSO
 
@@ -199,6 +234,42 @@ sub api2_p {
       %{ $args_hash || {} },
     };
   $tx_p->then(sub { $_[0]->res->json });
+}
+
+sub dir_walk_p {
+  my ($from_dir, $to_dir, $from_map, $to_map, $to_dir_created) = @_;
+  my $to_dir_create_p;
+  if ($to_dir_created) {
+    $to_dir_create_p = Mojo::Promise->resolve(1);
+  } else {
+    my $from_dir_perms;
+    $to_dir_create_p = $from_map->{ls}->(path($from_dir)->dirname)->then(sub {
+      my ($dirs, $files) = @_;
+      $from_dir_perms = $dirs->{path($from_dir)->basename}[0] || '0755';
+    })->then(sub {
+      $to_map->{mkdir}->($to_dir)
+    })->then(sub {
+      $to_map->{chmod}->($to_dir, $from_dir_perms)
+    });
+  }
+  $to_dir_create_p->then(sub {
+    $from_map->{ls}->($from_dir)
+  })->then(sub {
+    my ($dirs, $files) = @_;
+    my @dir_create_p = map {
+      my $this_dir = $_;
+      $to_map->{mkdir}->("$to_dir/$this_dir")
+        ->then(sub { $to_map->{chmod}->("$to_dir/$this_dir", $dirs->{$this_dir}[0]) })
+        ->then(sub { dir_walk_p("$from_dir/$this_dir", "$to_dir/$this_dir", $from_map, $to_map, 1) })
+    } sort keys %$dirs;
+    my @file_create_p = map {
+      my $this_file = $_;
+      $from_map->{read}->($from_dir, $this_file)
+        ->then(sub { $to_map->{write}->($to_dir, $this_file, $_[0]) })
+        ->then(sub { $to_map->{chmod}->("$to_dir/$this_file", $files->{$this_file}[0]) })
+    } sort keys %$files;
+    Mojo::Promise->all(@dir_create_p, @file_create_p);
+  });
 }
 
 1;
