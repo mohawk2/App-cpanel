@@ -22,6 +22,9 @@ App::cpanel - CLI for cPanel UAPI and API 2
     # this is multiple files but refuses to overwrite
     $ cpanel upload public_html/cgi-bin hello-world
 
+    # download
+    $ cpanel mirror public_html public_html cpanel localfs
+
 # DESCRIPTION
 
 CLI for cPanel UAPI and also API 2, due to missing functionality in UAPI.

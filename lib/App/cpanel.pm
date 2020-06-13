@@ -33,6 +33,9 @@ App::cpanel - CLI for cPanel UAPI and API 2
   # this is multiple files but refuses to overwrite
   $ cpanel upload public_html/cgi-bin hello-world
 
+  # download
+  $ cpanel mirror public_html public_html cpanel localfs
+
 =head1 DESCRIPTION
 
 CLI for cPanel UAPI and also API 2, due to missing functionality in UAPI.
@@ -120,9 +123,20 @@ my %cmd2func = (
   download => [ \&download_p, 0 ],
   upload => [ \&upload_p, 1 ],
   api2 => [ \&api2_p, 1 ],
+  mirror => [ \&mirror_p, 1 ],
 );
 my $token_file = "$ENV{HOME}/.cpanel-token";
 my $domain_file = "$ENV{HOME}/.cpanel-domain";
+my %localfs_map = (
+  ls => \&localfs_ls,
+  mkdir => \&localfs_mkdir,
+  read => \&localfs_read,
+  write => \&localfs_write,
+  chmod => \&localfs_chmod,
+);
+our %MAP2HASH = (
+  localfs => \%localfs_map,
+);
 
 sub dispatch_cmd_print {
   my $cmd = shift;
@@ -270,6 +284,56 @@ sub dir_walk_p {
     } sort keys %$files;
     Mojo::Promise->all(@dir_create_p, @file_create_p);
   });
+}
+
+sub mirror_p {
+  my ($from_dir, $to_dir, $from_map, $to_map) = @_;
+  die "No from_dir\n" unless $from_dir;
+  die "No to_dir\n" unless $to_dir;
+  die "No from_map\n" unless $from_map;
+  die "No to_map\n" unless $to_map;
+  die "Invalid from_map\n" unless $from_map = $MAP2HASH{$from_map};
+  die "Invalid to_map\n" unless $to_map = $MAP2HASH{$to_map};
+  dir_walk_p $from_dir, $to_dir, $from_map, $to_map;
+}
+
+sub localfs_ls {
+  my ($dir) = @_;
+  my $dir_path = path($dir);
+  my %files = map {
+    ($_->basename => [ sprintf("%o", $_->lstat->mode), $_->lstat->mtime ])
+  } $dir_path->list->each;
+  my %dirs = map {
+    ($_->basename => [ sprintf("%o", $_->lstat->mode), $_->lstat->mtime ])
+  } $dir_path->list({dir => 1})->grep(sub { !$files{$_->basename} })->each;
+  Mojo::Promise->resolve(\%dirs, \%files);
+}
+
+sub localfs_mkdir {
+  my ($dir) = @_;
+  my $dir_path = path($dir);
+  $dir_path->make_path;
+  Mojo::Promise->resolve(1);
+}
+
+sub localfs_read {
+  my ($dir, $file) = @_;
+  my $path = path($dir)->child($file);
+  Mojo::Promise->resolve($path->slurp);
+}
+
+sub localfs_write {
+  my ($dir, $file, $content) = @_;
+  my $path = path($dir)->child($file);
+  $path->spurt($content);
+  Mojo::Promise->resolve(1);
+}
+
+sub localfs_chmod {
+  my ($path, $perms) = @_;
+  $path = path($path);
+  $path->chmod(oct $perms);
+  Mojo::Promise->resolve(1);
 }
 
 1;
