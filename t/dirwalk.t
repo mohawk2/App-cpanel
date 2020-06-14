@@ -9,13 +9,14 @@ my %dir2contents = (
     {},
   ],
   'public_html' => [
-    { 'cgi-bin' => [qw(0755 30)] },
+    { 'cgi-bin' => [qw(0755 30)], 'logs' => [qw(0755 30)] },
     { 'index.html' => [qw(0644 30)], 'other.html' => [qw(0644 30)] },
   ],
   'public_html/cgi-bin' => [
     {},
     { 'hello' => [qw(0755 30)] },
   ],
+  'public_html/logs' => [ {}, {} ],
 );
 my %file2contents = (
   'public_html/index.html' => 'the index',
@@ -38,7 +39,7 @@ my @errors;
 dir_walk_p(qw(public_html other), \%test_map, \%test_map)
   ->catch(sub { @errors = @_ })->wait;
 ok !@errors, 'errors' or diag explain \@errors;
-is_deeply \@mkdirs, [ qw(other other/cgi-bin) ], 'mkdirs'
+is_deeply \@mkdirs, [ qw(other other/cgi-bin other/logs) ], 'mkdirs'
   or diag explain \@mkdirs;
 is_deeply \@writes, [
   [ qw(other index.html), 'the index' ],
@@ -50,6 +51,7 @@ is_deeply \@chmods, [
   [ 'other/index.html', '0644' ],
   [ 'other/other.html', '0644' ],
   [ 'other/cgi-bin', '0755' ],
+  [ 'other/logs', '0755' ],
   [ 'other/cgi-bin/hello', '0755' ],
 ], 'chmods' or diag explain \@chmods;
 

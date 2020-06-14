@@ -324,6 +324,7 @@ sub dir_walk_p {
         ->then(sub { $to_map->{write}->($to_dir, $this_file, $_[0]) })
         ->then(sub { $to_map->{chmod}->("$to_dir/$this_file", $files->{$this_file}[0]) })
     } sort keys %$files;
+    return Mojo::Promise->resolve(1) unless @dir_create_p + @file_create_p;
     Mojo::Promise->all(@dir_create_p, @file_create_p);
   });
 }
