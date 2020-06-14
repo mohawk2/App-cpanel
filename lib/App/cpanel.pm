@@ -2,7 +2,7 @@ package App::cpanel;
 
 use Exporter 'import';
 
-our $VERSION = '0.005';
+our $VERSION = '0.006';
 our @EXPORT_OK = qw(dispatch_cmd_print dispatch_cmd_raw_p dir_walk_p);
 
 =head1 NAME
