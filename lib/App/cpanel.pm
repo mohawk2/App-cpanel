@@ -299,34 +299,25 @@ sub api2_p {
 }
 
 sub dir_walk_p {
-  my ($from_dir, $to_dir, $from_map, $to_map, $to_dir_created) = @_;
-  my $to_dir_create_p;
-  if ($to_dir_created) {
-    $to_dir_create_p = Mojo::Promise->resolve(1);
-  } else {
-    my $from_dir_perms;
-    $to_dir_create_p = $to_map->{ls}->($to_dir)->catch(sub {
-      # only create if ls fails
-      $to_map->{mkdir}->($to_dir)
-    })->then(sub {
-      $from_map->{ls}->(path($from_dir)->dirname)
-    })->then(sub {
-      my ($dirs, $files) = @_;
-      $from_dir_perms = $dirs->{path($from_dir)->basename}[0] || '0755';
-    })->then(sub {
-      $to_map->{chmod}->($to_dir, $from_dir_perms)
-    });
-  }
-  $to_dir_create_p->then(sub {
+  my ($from_dir, $to_dir, $from_map, $to_map) = @_;
+  my $from_dir_perms;
+  $to_map->{ls}->($to_dir)->catch(sub {
+    # only create if ls fails
+    $to_map->{mkdir}->($to_dir)
+  })->then(sub {
+    $from_map->{ls}->(path($from_dir)->dirname)
+  })->then(sub {
+    my ($dirs, $files) = @_;
+    $from_dir_perms = $dirs->{path($from_dir)->basename}[0] || '0755';
+  })->then(sub {
+    $to_map->{chmod}->($to_dir, $from_dir_perms)
+  })->then(sub {
     $from_map->{ls}->($from_dir)
   })->then(sub {
     my ($dirs, $files) = @_;
-    my @dir_create_p = map {
-      my $this_dir = $_;
-      $to_map->{mkdir}->("$to_dir/$this_dir")
-        ->then(sub { $to_map->{chmod}->("$to_dir/$this_dir", $dirs->{$this_dir}[0]) })
-        ->then(sub { dir_walk_p("$from_dir/$this_dir", "$to_dir/$this_dir", $from_map, $to_map, 1) })
-    } sort keys %$dirs;
+    my @dir_create_p = map
+      dir_walk_p("$from_dir/$_", "$to_dir/$_", $from_map, $to_map),
+        sort keys %$dirs;
     my @file_create_p = map {
       my $this_file = $_;
       $from_map->{read}->($from_dir, $this_file)

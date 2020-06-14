@@ -47,9 +47,9 @@ is_deeply \@writes, [
 ], 'writes' or diag explain \@writes;
 is_deeply \@chmods, [
   [ 'other', '0755' ],
-  [ 'other/cgi-bin', '0755' ],
   [ 'other/index.html', '0644' ],
   [ 'other/other.html', '0644' ],
+  [ 'other/cgi-bin', '0755' ],
   [ 'other/cgi-bin/hello', '0755' ],
 ], 'chmods' or diag explain \@chmods;
 
